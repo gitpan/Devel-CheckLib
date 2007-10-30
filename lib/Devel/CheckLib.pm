@@ -1,10 +1,10 @@
-# $Id: CheckLib.pm,v 1.1 2007/10/18 17:41:03 drhyde Exp $
+# $Id: CheckLib.pm,v 1.10 2007/10/30 15:12:17 drhyde Exp $
 
 package Devel::CheckLib;
 
 use strict;
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '0.2';
+$VERSION = '0.3';
 use Config;
 
 use File::Spec;
@@ -16,6 +16,8 @@ require Exporter;
 
 # localising prevents the warningness leaking out of this module
 local $^W = 1;    # use warnings is a 5.6-ism
+
+_findcc(); # bomb out early if there's no compiler
 
 =head1 NAME
 
@@ -51,7 +53,7 @@ It works by trying to compile this:
     int main(void) { return 0; }
 
 and linking it to the specified libraries.  If something pops out the end
-which looks executable, then the module simply returns.  If not, it dies.
+which looks executable, then we know that it worked.
 
 =head1 FUNCTIONS
 
@@ -60,14 +62,18 @@ To avoid exporting them, C<use Devel::CheckLib ()>.
 
 =head2 assert_lib
 
-Takes parameters C<lib> and C<libpath>. 
+Takes several named parameters.
+
 The value of C<lib> must be either a string with the name of a single 
 library or a reference to an array of strings of library names.  Depending
 on the compiler found, library names will be fed to the compiler either as
 C<-l> arguments or as C<.lib> file names.  (E.g. C<-ljpeg> or C<jpeg.lib>)
 
-Likewise, C<libpath> must either be a string or an array of strings
+Likewise, C<libpath> must if provided either be a string or an array of strings
 representing additional paths to search for libraries.
+
+C<LIBS> must be a C<ExtUtils::MakeMaker>-style space-seperated list of
+libraries (each preceded by '-l') and directories (preceded by '-L').
 
 This will die with an error message if any of the libraries listed can
 not be found.  B<Note>: dying in a Makefile.PL or Build.PL may provoke
@@ -100,11 +106,21 @@ sub check_lib_or_exit {
 sub assert_lib {
     my %args = @_;
     my (@libs, @libpaths);
+
     @libs = (ref($args{lib}) ? @{$args{lib}} : $args{lib}) 
         if $args{lib};
     @libpaths = (ref($args{libpath}) ? @{$args{libpath}} : $args{libpath}) 
         if $args{libpath};
-    my $cc = _findcc();
+
+    # work-a-like for Makefile.PL's "LIBS" argument
+    if(defined($args{LIBS})) {
+        foreach my $arg (split(/\s+/, $args{LIBS})) {
+            die("LIBS argument badly-formed: $arg\n") unless($arg =~ /^-l/i);
+            push @{$arg =~ /^-l/ ? \@libs : \@libpaths}, substr($arg, 2);
+        }
+    }
+
+    my @cc = _findcc();
     my($ch, $cfile) = File::Temp::tempfile(
         'assertlibXXXXXXXX', SUFFIX => '.c', UNLINK => 1
     );
@@ -115,18 +131,21 @@ sub assert_lib {
     for my $lib ( @libs ) {
         my $exefile = File::Temp::mktemp( 'assertlibXXXXXXXX' ) . $Config{_exe};
         my @sys_cmd;
-        if ( $Config{cc} eq 'cl' ) {
+        if ( $Config{cc} eq 'cl' ) {                 # Microsoft compiler
             require Win32;
             my @libpath = map { 
                 q{/libpath:} . Win32::GetShortPathName($_)
             } @libpaths; 
-            @sys_cmd = ($cc, $cfile, "${lib}.lib", "/Fe$exefile", 
+            @sys_cmd = (@cc, $cfile, "${lib}.lib", "/Fe$exefile", 
                         "/link", @libpath
             );   
-        }
-        else {
+        } elsif($Config{cc} =~ /bcc32(\.exe)?/) {    # Borland
             my @libpath = map { "-L$_" } @libpaths;
-            @sys_cmd = ($cc, $cfile,  "-o", "$exefile", "-l$lib", @libpath);
+            @sys_cmd = (@cc, "-o$exefile", "-l$lib", @libpath, $cfile);
+        } else {                                     # Unix-ish
+                                                     # gcc, Sun, AIX (gcc, cc)
+            my @libpath = map { "-L$_" } @libpaths;
+            @sys_cmd = (@cc, $cfile,  "-o", "$exefile", "-l$lib", @libpath);
         }
         warn "# @sys_cmd\n" if $args{debug};
         my $rv = $args{debug} ? system(@sys_cmd) : _quiet_system(@sys_cmd);
@@ -151,10 +170,11 @@ sub _cleanup_exe {
     
 sub _findcc {
     my @paths = split(/$Config{path_sep}/, $ENV{PATH});
-    return $Config{cc} if -x $Config{cc};
+    my @cc = split(/\s+/, $Config{cc});
+    return @cc if -x $cc[0];
     foreach my $path (@paths) {
-        my $compiler = File::Spec->catfile($path, $Config{cc}) . $Config{_exe};
-        return $compiler if -x $compiler;
+        my $compiler = File::Spec->catfile($path, $cc[0]) . $Config{_exe};
+        return ($compiler, @cc[1 .. $#cc]) if -x $compiler;
     }
     die("Couldn't find your C compiler\n");
 }
@@ -195,8 +215,23 @@ sub _quiet_system {
 You must have a C compiler installed.  We check for C<$Config{cc}>,
 both literally as it is in Config.pm and also in the $PATH.
 
-Probably contains unsupportable assumptions about how to invoke the
-compilers and stuff.
+It has been tested with varying degrees on rigourousness on:
+
+=over
+
+=item gcc (on Linux, *BSD, Solaris, Cygwin)
+
+=item Sun's compiler tools on Solaris
+
+=item IBM's tools on AIX
+
+=item Microsoft's tools on Windows
+
+=item MinGW on Windows (with Strawberry Perl)
+
+=item Borland's tools on Windows
+
+=back
 
 =head1 WARNINGS, BUGS and FEEDBACK
 
@@ -204,12 +239,13 @@ This is a very early release intended primarily for feedback from
 people who have discussed it.  The interface may change and it has
 not been adequately tested.
 
-I welcome feedback about my code, including constructive criticism.
+Feedback is most welcome, including constructive criticism.
 Bug reports should be made using L<http://rt.cpan.org/> or by email.
 
-If you are feeling particularly generous you can encourage me in my
-open source endeavours by buying me something from my wishlist:
-  L<http://www.cantrell.org.uk/david/wishlist/>
+When submitting a bug report, please include the output from running:
+
+    perl -V
+    perl -MDevel::CheckLib
 
 =head1 SEE ALSO
 
@@ -221,8 +257,10 @@ David Cantrell E<lt>david@cantrell.org.ukE<gt>
 
 David Golden E<lt>dagolden@cpan.orgE<gt>
 
-Thanks to the cpan-testers-discuss mailing list for prompting me to write it
-in the first place.
+Thanks to the cpan-testers-discuss mailing list for prompting us to write it
+in the first place;
+
+to Chris Williams for help with Borland support.
 
 =head1 COPYRIGHT and LICENCE
 

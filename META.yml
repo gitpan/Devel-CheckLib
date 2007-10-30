@@ -1,12 +1,12 @@
 --- #YAML:1.0
 name:                Devel-CheckLib
-version:             0.2
+version:             0.3
 abstract:            ~
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.32
 distribution_type:   module
 requires:     
-    File::Temp:                    0.18
+    File::Temp:                    0.16
     Test::More:                    0.62
 meta-spec:
     url:     http://module-build.sourceforge.net/META-spec-v1.2.html
