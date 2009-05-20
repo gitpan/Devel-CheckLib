@@ -16,4 +16,6 @@ t/dash-l-libs.t
 t/headers.t
 t/inc/headerfile.h
 VMS-notes
+t/coverage.sh
+t/cmdline-LIBS-INC.t
 META.yml                                 Module meta-data (added by MakeMaker)
