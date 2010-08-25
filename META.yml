@@ -1,23 +1,15 @@
 --- #YAML:1.0
-name:               Devel-CheckLib
-version:            0.699_002
-abstract:           ~
-author:  []
-license:            unknown
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
-build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    File::Temp:         0.16
-    IO::CaptureOutput:  1.0801
-    Test::More:         0.62
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.50
+name:                Devel-CheckLib
+version:             0.7
+abstract:            ~
+license:             ~
+author:              ~
+generated_by:        ExtUtils::MakeMaker version 6.42
+distribution_type:   module
+requires:     
+    File::Temp:                    0.16
+    IO::CaptureOutput:             1.0801
+    Test::More:                    0.62
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
+    version: 1.3
