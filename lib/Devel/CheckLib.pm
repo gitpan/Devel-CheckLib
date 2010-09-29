@@ -5,8 +5,9 @@ package Devel::CheckLib;
 use 5.00405; #postfix foreach
 use strict;
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '0.8';
+$VERSION = '0.9';
 use Config;
+use Text::ParseWords 'quotewords';
 
 use File::Spec;
 use File::Temp;
@@ -188,7 +189,7 @@ sub assert_lib {
     # work-a-like for Makefile.PL's LIBS and INC arguments
     # if given as command-line argument, append to %args
     for my $arg (@ARGV) {
-        for my $mm_attr_key qw(LIBS INC) {
+        for my $mm_attr_key (qw(LIBS INC)) {
             if (my ($mm_attr_value) = $arg =~ /\A $mm_attr_key = (.*)/x) {
             # it is tempting to put some \s* into the expression, but the
             # MM command-line parser only accepts LIBS etc. followed by =,
@@ -329,12 +330,14 @@ sub _cleanup_exe {
 }
     
 sub _findcc {
+    my @flags = grep { length } map { quotewords('\s+', 0, $_) }
+        @Config{qw(ccflags ldflags)};
     my @paths = split(/$Config{path_sep}/, $ENV{PATH});
     my @cc = split(/\s+/, $Config{cc});
-    return @cc if -x $cc[0];
+    return (@cc, @flags) if -x $cc[0];
     foreach my $path (@paths) {
         my $compiler = File::Spec->catfile($path, $cc[0]) . $Config{_exe};
-        return ($compiler, @cc[1 .. $#cc]) if -x $compiler;
+        return ($compiler, @cc[1 .. $#cc], @flags) if -x $compiler;
     }
     die("Couldn't find your C compiler\n");
 }
