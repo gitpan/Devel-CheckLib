@@ -5,7 +5,7 @@ package Devel::CheckLib;
 use 5.00405; #postfix foreach
 use strict;
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '0.9';
+$VERSION = '0.10';
 use Config;
 use Text::ParseWords 'quotewords';
 
@@ -330,7 +330,7 @@ sub _cleanup_exe {
 }
     
 sub _findcc {
-    my @flags = grep { length } map { quotewords('\s+', 0, $_) }
+    my @flags = grep { length } map { quotewords('\s+', 0, $_ || ()) }
         @Config{qw(ccflags ldflags)};
     my @paths = split(/$Config{path_sep}/, $ENV{PATH});
     my @cc = split(/\s+/, $Config{cc});

@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Devel-CheckLib
-version:            0.9
+version:            0.10
 abstract:           ~
 author:  []
 license:            perl
