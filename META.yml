@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Devel-CheckLib
-version:            0.93
+version:            0.94
 abstract:           ~
 author:  []
 license:            perl
@@ -8,21 +8,20 @@ distribution_type:  module
 configure_requires:
     ExtUtils::MakeMaker:  0
 build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Exporter:           0
-    File::Spec:         0
-    File::Temp:         0.16
     IO::CaptureOutput:  1.0801
-    perl:               5.00405
     Test::More:         0.62
+requires:
+    Exporter:    0
+    File::Spec:  0
+    File::Temp:  0.16
+    perl:        5.00405
 resources:
     repository:  http://github.com/mattn/p5-Devel-CheckLib
 no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.55_02
+generated_by:       ExtUtils::MakeMaker version 6.56
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

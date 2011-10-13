@@ -5,7 +5,7 @@ package Devel::CheckLib;
 use 5.00405; #postfix foreach
 use strict;
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '0.93';
+$VERSION = '0.94';
 use Config qw(%Config);
 use Text::ParseWords 'quotewords';
 
@@ -316,7 +316,7 @@ sub assert_lib {
     unlink $cfile;
 
     my $miss_string = join( q{, }, map { qq{'$_'} } @missing );
-    die("Can't link/include $miss_string\n") if @missing;
+    die("Can't link/include C library $miss_string, aborting.\n") if @missing;
     my $wrong_string = join( q{, }, map { qq{'$_'} } @wrongresult);
     die("wrong result: $wrong_string\n") if @wrongresult;
 }
