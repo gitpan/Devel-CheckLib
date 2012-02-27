@@ -25,4 +25,4 @@ requires:
   perl: 5.00405
 resources:
   repository: http://github.com/mattn/p5-Devel-CheckLib
-version: 0.96
+version: 0.97
