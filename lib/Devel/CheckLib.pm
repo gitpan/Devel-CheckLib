@@ -5,7 +5,7 @@ package Devel::CheckLib;
 use 5.00405; #postfix foreach
 use strict;
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '0.97';
+$VERSION = '0.98';
 use Config qw(%Config);
 use Text::ParseWords 'quotewords';
 
@@ -301,9 +301,9 @@ sub assert_lib {
                 @$cc,
                 @$ld,
                 "-o$exefile",
-                "-l$lib",
                 (map { "-I$_" } @incpaths),
                 (map { "-L$_" } @libpaths),
+                "-l$lib",
                 $cfile);
         } else {                                     # Unix-ish
                                                      # gcc, Sun, AIX (gcc, cc)
@@ -312,9 +312,9 @@ sub assert_lib {
                 @$ld,
                 $cfile,
                 "-o", "$exefile",
-                "-l$lib",
                 (map { "-I$_" } @incpaths),
-                (map { "-L$_" } @libpaths)
+                (map { "-L$_" } @libpaths),
+                "-l$lib",
             );
         }
         warn "# @sys_cmd\n" if $args{debug};
@@ -359,8 +359,11 @@ sub _cleanup_exe {
 sub _findcc {
     # Need to use $keep=1 to work with MSWin32 backslashes and quotes
     my $Config_ccflags =  $Config{ccflags};  # use copy so ASPerl will compile
-    my @Config_ldflags =  @Config{qw(ldflags perllibs)};
-    my @ccflags = grep { length } quotewords('\s+', 1, $Config_ccflags);
+    my @Config_ldflags = ();
+    for my $config_val ( @Config{qw(ldflags perllibs)} ){
+        push @Config_ldflags, $config_val if ( $config_val =~ /\S/ );
+    }
+    my @ccflags = grep { length } quotewords('\s+', 1, $Config_ccflags||'');
     my @ldflags = grep { length } quotewords('\s+', 1, @Config_ldflags);
     my @paths = split(/$Config{path_sep}/, $ENV{PATH});
     my @cc = split(/\s+/, $Config{cc});
