@@ -5,7 +5,7 @@ package Devel::CheckLib;
 use 5.00405; #postfix foreach
 use strict;
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '1.02';
+$VERSION = '1.03';
 use Config qw(%Config);
 use Text::ParseWords 'quotewords';
 
@@ -365,7 +365,7 @@ sub _findcc {
     # Need to use $keep=1 to work with MSWin32 backslashes and quotes
     my $Config_ccflags =  $Config{ccflags};  # use copy so ASPerl will compile
     my @Config_ldflags = ();
-    for my $config_val ( @Config{qw(ldflags perllibs)} ){
+    for my $config_val ( @Config{qw(ldflags)} ){
         push @Config_ldflags, $config_val if ( $config_val =~ /\S/ );
     }
     my @ccflags = grep { length } quotewords('\s+', 1, $Config_ccflags||'');
